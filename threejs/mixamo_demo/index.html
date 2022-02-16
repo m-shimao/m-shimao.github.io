@@ -20,6 +20,7 @@
     let model;
     let clock = new THREE.Clock();
     let mixer;
+    let modelReady = false
 
     init();
 
@@ -28,7 +29,7 @@
         scene.add(new THREE.AxesHelper(5));
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
         camera.position.x = 200;
-        camera.position.y = 300;
+        camera.position.y = 200;
         camera.position.z = 500;
         camera.lookAt(new THREE.Vector3(0,0,0));
 
@@ -53,7 +54,28 @@
         const loader = new FBXLoader();
         loader.load( './assets/exo_gray.fbx', function ( object ) {
             object.scale.set(1, 1, 1);
+            mixer = new THREE.AnimationMixer(object)
             scene.add( object );
+            loader.load(
+                './assets/walk.fbx',
+                (objectWalk) => {
+                  console.log('loaded walk')
+                  const animationAction = mixer.clipAction(
+                    objectWalk.animations[0]
+                  )
+                  modelReady = true
+                  animationAction.reset()
+                  animationAction.fadeIn(3)
+                  animationAction.play()
+                },
+                (xhr) => {
+                    console.log('walk ' + (xhr.loaded / xhr.total) * 100 + '% loaded')
+                },
+                (error) => {
+                    console.log(error)
+                }
+            )
+
         },
         (xhr) => {
             console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
@@ -69,7 +91,7 @@
 
         //アニメーション処理
         function animate() {
-            if (mixer) {
+            if (modelReady) {
                 mixer.update(clock.getDelta());
             }
 
