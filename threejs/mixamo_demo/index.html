@@ -1,0 +1,88 @@
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Three.js mixamo demo</title>
+</head>
+<body>
+  <div id="output">
+  </div>
+
+  <script type="module">
+    import * as THREE from'https://unpkg.com/three@0.126.1/build/three.module.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.126.1/examples/jsm/controls/OrbitControls.js';
+    import { FBXLoader } from 'https://unpkg.com/three@0.126.1/examples/jsm/loaders/FBXLoader.js';
+
+    let camera;
+    let scene;
+    let renderer;
+    let model;
+    let clock = new THREE.Clock();
+    let mixer;
+
+    init();
+
+    function init() {
+        scene = new THREE.Scene();
+        scene.add(new THREE.AxesHelper(5));
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 5000);
+        camera.position.x = 200;
+        camera.position.y = 300;
+        camera.position.z = 500;
+        camera.lookAt(new THREE.Vector3(0,0,0));
+
+        const controls = new OrbitControls(camera, document.body);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.2;
+
+        const dirLight = new THREE.SpotLight(0xffffff,1.5);//color,強度
+        dirLight.position.set(-200, 300, 300);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        renderer = new THREE.WebGLRenderer({ 
+            alpha: true,
+            antialias: true
+        });
+        renderer.setClearColor(new THREE.Color(0xffffff));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+
+
+        const loader = new FBXLoader();
+        loader.load( './assets/exo_gray.fbx', function ( object ) {
+            object.scale.set(1, 1, 1);
+            scene.add( object );
+        },
+        (xhr) => {
+            console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
+        },
+        (error) => {
+            console.log(error)
+        } );
+
+        //レンダラー実行関数
+        function render() {
+            renderer.render(scene, camera)
+        }
+
+        //アニメーション処理
+        function animate() {
+            if (mixer) {
+                mixer.update(clock.getDelta());
+            }
+
+            controls.update()
+            render()
+            requestAnimationFrame( animate );
+        }
+
+        animate()
+        //読み込んだシーンが暗いので、明るくする
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        document.getElementById("output").appendChild(renderer.domElement);
+    }
+    </script>
+</body>
+</html>
